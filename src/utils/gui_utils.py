@@ -143,7 +143,7 @@ def update_listbox(listbox, message, color=None):
     def _update():
         listbox.insert(tk.END, message)
         if color:
-            listbox.itemconfig(listbox.size() - 1, {"bg": color})
+            listbox.itemconfig(listbox.size() - 1, {"bg": color, "fg": "white"})
 
     listbox.after(0, _update)
 
