@@ -110,6 +110,9 @@ def process_serial(
                 )
                 persisted_data["counter"] = 0
                 persisted_data["current_USN"] = None
+        else:
+            persisted_data["counter"] = 0
+            persisted_data["current_USN"] = None
 
 
 def process_check_route(
