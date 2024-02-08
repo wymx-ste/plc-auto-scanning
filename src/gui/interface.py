@@ -9,6 +9,7 @@ from utils.gui_utils import (
     get_workstation_name,
     get_line,
     resource_path,
+    start_tasks_workers,
 )
 
 aqua = "#4dcbbd"
@@ -89,6 +90,7 @@ def create_serial_number_window():
                 line,
                 persisted_data,
                 response_listbox,
+                error_listbox,
                 quantity_label,
                 unit_serial_number_label,
                 event,
@@ -97,12 +99,43 @@ def create_serial_number_window():
         ),
     )
 
-    # Add a Listbox to display the response responses.
-    response_listbox = tk.Listbox(root, height=15, width=80)
-    scrollbar = tk.Scrollbar(root, orient="vertical", command=response_listbox.yview)
+    # Main frame for Listboxes.
+    main_listbox_frame = tk.Frame(root)
+    main_listbox_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+    # Frame for the PASS responses Listbox.
+    pass_frame = tk.Frame(main_listbox_frame)
+    pass_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+
+    # Label for the PASS responses Listbox.
+    pass_label = tk.Label(pass_frame, text="PASS:")
+    pass_label.pack(side="top", fill="x")
+
+    # Listbox to display the PASS responses.
+    response_listbox = tk.Listbox(pass_frame)
+    scrollbar = tk.Scrollbar(
+        pass_frame, orient="vertical", command=response_listbox.yview
+    )
     response_listbox.config(yscrollcommand=scrollbar.set)
     scrollbar.pack(side="right", fill="y")
     response_listbox.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+
+    # Frame for the ERROR responses Listbox.
+    error_frame = tk.Frame(main_listbox_frame)
+    error_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+
+    # Label for the ERROR responses Listbox.
+    error_label = tk.Label(error_frame, text="ERROR:")
+    error_label.pack(side="top", fill="x")
+
+    # Listbox to display the ERROR responses.
+    error_listbox = tk.Listbox(error_frame)
+    scrollbar = tk.Scrollbar(
+        error_frame, orient="vertical", command=error_listbox.yview
+    )
+    error_listbox.config(yscrollcommand=scrollbar.set)
+    scrollbar.pack(side="right", fill="y")
+    error_listbox.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
     # Open the modal window for employee ID on top of the main window.
     create_employee_id_window(root, employee_id_label, persisted_data)
@@ -121,6 +154,7 @@ def create_serial_number_window():
 
 
 def run_app():
+    start_tasks_workers()
     create_serial_number_window()
 
 
