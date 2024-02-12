@@ -234,13 +234,13 @@ def check_restart(
             )
             if complete_response != "OK":
                 update_listbox(
-                    pass_listbox,
+                    error_listbox,
                     f"Complete Failed for {usn}: {complete_response}",
                     "red",
                 )
             else:
                 update_listbox(
-                    error_listbox,
+                    pass_listbox,
                     f"Complete Response for {usn}: {complete_response}",
                     "green",
                 )
