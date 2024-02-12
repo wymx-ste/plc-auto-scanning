@@ -313,7 +313,10 @@ def update_labels(label, value_text, value):
 
 def get_workstation_name():
     # The workstation name, for example, "3L06B1AO17".
-    return socket.gethostname()
+    if getattr(sys, "frozen", False):
+        return socket.gethostname()
+    else:
+        return "3L06B1AO17"
 
 
 def get_line(workstation):
