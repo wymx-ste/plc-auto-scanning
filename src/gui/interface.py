@@ -32,6 +32,7 @@ def create_serial_number_window():
     # Font Style.
     default_font = font.nametofont("TkDefaultFont")
     default_font.configure(family="Helvetica", size=24)
+    listbox_font = font.Font(family="Helvetica", size=14)
     root.option_add("*Font", default_font)
 
     # Header frame.
@@ -103,12 +104,17 @@ def create_serial_number_window():
     main_listbox_frame = tk.Frame(root)
     main_listbox_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
+    # Configure the main_listbox_frame to expand its children equally.
+    main_listbox_frame.grid_columnconfigure(0, weight=1)
+    main_listbox_frame.grid_rowconfigure(0, weight=1)
+    main_listbox_frame.grid_rowconfigure(1, weight=1)
+
     # Frame for the PASS responses Listbox.
     pass_frame = tk.Frame(main_listbox_frame)
-    pass_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+    pass_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=5)
 
     # Label for the PASS responses Listbox.
-    pass_label = tk.Label(pass_frame, text="PASS:")
+    pass_label = tk.Label(pass_frame, text="PASS:", font=listbox_font)
     pass_label.pack(side="top", fill="x")
 
     # Listbox to display the PASS responses.
@@ -122,10 +128,10 @@ def create_serial_number_window():
 
     # Frame for the ERROR responses Listbox.
     error_frame = tk.Frame(main_listbox_frame)
-    error_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+    error_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=5)
 
     # Label for the ERROR responses Listbox.
-    error_label = tk.Label(error_frame, text="ERROR:")
+    error_label = tk.Label(error_frame, text="ERROR:", font=listbox_font)
     error_label.pack(side="top", fill="x")
 
     # Listbox to display the ERROR responses.
