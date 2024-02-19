@@ -11,10 +11,11 @@ from sfcs.sfcs_lib import (
     send_complete,
     check_route,
 )
+from plc.communication import send_signal
 
 # Global ThreadPoolExecutor for making the SFCS requests.
 tasks_queue = Queue()
-MAX_RETRIES = 2
+MAX_RETRIES = 3
 RETRY_DELAY = 1
 
 
@@ -60,6 +61,7 @@ def handle_serials_submit(
                     f"The current USN is the same as the scanned before.",
                     "red",
                 )
+                send_signal(robot_number, line, False)
             tasks_queue.put(
                 (
                     process_check_route,
@@ -94,6 +96,7 @@ def handle_serials_submit(
                 )
             else:
                 update_listbox(error_listbox, "Please scan a valid L10.", "red")
+                send_signal(robot_number, line, False)
 
 
 def process_serial(
@@ -152,6 +155,7 @@ def process_serial(
                 f"Upload Failed for {serial_number}: {response}",
                 "red",
             )
+            send_signal(robot_number, line, False)
 
             # Break on first non-retryable error.
             break
@@ -163,6 +167,7 @@ def process_serial(
             f"Upload Failed after {MAX_RETRIES} retries for {serial_number}: {response}",
             "red",
         )
+        send_signal(robot_number, line, False)
 
     # Check if the counter needs to set to 0 and the current USN needs to be set to None.
     check_restart(
@@ -191,6 +196,7 @@ def process_check_route(
             f"Check Route Failed for {serial_number}: {check_route_response}",
             "red",
         )
+        send_signal(persisted_data["robot_number"], persisted_data["line"], False)
     else:
         # Clear the Listboxes before processing a new serial number.
         response_listbox.delete(0, tk.END)
@@ -211,6 +217,7 @@ def process_check_route(
                 f"Please scan a valid Serial or Validator",
                 "red",
             )
+            send_signal(persisted_data["robot_number"], persisted_data["line"], False)
 
 
 def check_restart(
@@ -255,6 +262,7 @@ def check_restart(
 def update_listbox(listbox, message, color=None):
     def _update():
         listbox.insert(tk.END, message)
+        listbox.yview(tk.END)
         if color:
             listbox.itemconfig(listbox.size() - 1, {"bg": color, "fg": "white"})
 

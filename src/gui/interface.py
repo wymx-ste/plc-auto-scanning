@@ -20,7 +20,7 @@ persisted_data = {"employee_id": None, "current_USN": None, "counter": 0}
 
 def create_serial_number_window():
     root = tk.Tk()
-    root.title("PLC Serial Scanning App")
+    root.title("PLC Auto Scanning App")
 
     root.state("zoomed")
 
