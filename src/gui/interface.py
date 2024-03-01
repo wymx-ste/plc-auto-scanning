@@ -15,7 +15,12 @@ from utils.gui_utils import (
 aqua = "#4dcbbd"
 green = "#6ccc9c"
 yellow = "#c1c95a"
-persisted_data = {"employee_id": None, "current_USN": None, "counter": 0}
+persisted_data = {
+    "employee_id": None,
+    "current_USN": None,
+    "counter": 0,
+    "old_USN": None,
+}
 
 
 def create_serial_number_window():

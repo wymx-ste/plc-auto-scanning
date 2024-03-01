@@ -52,22 +52,25 @@ def handle_serials_submit(
     current_USN = persisted_data["current_USN"]
     employee_id = persisted_data["employee_id"]
     robot_number = persisted_data["robot_number"]
+    old_USN = persisted_data["old_USN"]
     serial_number = serials.get()
     if serial_number:
         if serial_number.startswith("WTR"):
-            if serial_number == current_USN:
+            if serial_number == old_USN:
                 update_listbox(
                     error_listbox,
                     f"The current USN is the same as the scanned before.",
                     "red",
                 )
                 send_signal(robot_number, line, False)
+                return
             tasks_queue.put(
                 (
                     process_check_route,
                     (
                         serial_number,
                         persisted_data,
+                        line,
                         unit_serial_number_label,
                         quantity_label,
                         response_listbox,
@@ -111,6 +114,16 @@ def process_serial(
     response_listbox,
     error_listbox,
 ):
+    # Check if counter is less than the quantity.
+    if persisted_data["counter"] >= persisted_data["quantity"]:
+        update_listbox(
+            error_listbox,
+            f"Quantity limit reached.",
+            "red",
+        )
+        send_signal(robot_number, line, False)
+        return
+
     # Flag to check if the upload was successful.
     successful_upload = False
 
@@ -184,6 +197,7 @@ def process_serial(
 def process_check_route(
     serial_number,
     persisted_data,
+    line,
     unit_serial_number_label,
     quantity_label,
     response_listbox,
@@ -196,13 +210,13 @@ def process_check_route(
             f"Check Route Failed for {serial_number}: {check_route_response}",
             "red",
         )
-        send_signal(persisted_data["robot_number"], persisted_data["line"], False)
+        send_signal(persisted_data["robot_number"], line, False)
     else:
-        # Clear the Listboxes before processing a new serial number.
-        response_listbox.delete(0, tk.END)
-        error_listbox.delete(0, tk.END)
         current_usn = persisted_data.get("current_USN")
         if not current_usn:
+            # Clear the Listboxes before processing a new serial number.
+            response_listbox.delete(0, tk.END)
+            error_listbox.delete(0, tk.END)
             persisted_data["current_USN"] = serial_number
             update_listbox(response_listbox, f"USN: {serial_number}")
             update_labels(unit_serial_number_label, "Unit Serial Number", serial_number)
@@ -217,7 +231,7 @@ def process_check_route(
                 f"Please scan a valid Serial or Validator",
                 "red",
             )
-            send_signal(persisted_data["robot_number"], persisted_data["line"], False)
+            send_signal(persisted_data["robot_number"], line, False)
 
 
 def check_restart(
@@ -256,6 +270,7 @@ def check_restart(
             should_restart = True
     if should_restart:
         persisted_data["counter"] = 0
+        persisted_data["old_USN"] = persisted_data["current_USN"]
         persisted_data["current_USN"] = None
 
 
