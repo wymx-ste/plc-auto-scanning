@@ -291,7 +291,7 @@ def create_employee_id_window(parent, employee_id_label, persisted_data):
 
     allowed_users = read_allowed_users("users.txt")
 
-    if employee_id and employee_id in allowed_users:
+    if employee_id and employee_id.upper() in allowed_users:
         persisted_data["employee_id"] = employee_id
         update_labels(employee_id_label, "Employee ID", employee_id)
     elif employee_id:
