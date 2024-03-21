@@ -1,6 +1,6 @@
 from pycomm3 import LogixDriver
 import time
-from config import PLC_3L3, PLC_3L6
+from config import PLC_3L3, PLC_3L6, PLC_DELAY
 import threading
 
 
@@ -15,7 +15,7 @@ def send_signal(robot, line, signal=True):
         try:
             with LogixDriver(plc_ip) as plc:
                 plc.write(tag, True)
-                time.sleep(1)
+                time.sleep(PLC_DELAY)
                 plc.write(tag, False)
         except Exception as e:
             return
