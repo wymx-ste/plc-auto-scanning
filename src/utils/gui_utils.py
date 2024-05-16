@@ -10,6 +10,7 @@ from sfcs.sfcs_lib import (
     upload_USN_item_with_barcode_validation,
     send_complete,
     check_route,
+    validate_hdd,
 )
 from plc.communication import send_signal
 
@@ -17,6 +18,16 @@ from plc.communication import send_signal
 tasks_queue = Queue()
 MAX_RETRIES = 3
 RETRY_DELAY = 1
+
+# Models configuration.
+
+ROUTE = {
+    "GC": {
+        "1": "24",
+        "2": "48",
+        "3": "72",
+    }
+}
 
 
 def main():
@@ -245,29 +256,52 @@ def check_restart(
 ):
     should_restart = False
     if persisted_data["counter"] >= persisted_data["quantity"]:
-        # Send the complete for the previous USN if robot number is 3.
-        if robot_number == "3":
-            complete_response = send_complete(
-                usn,
-                line,
-                workstation,
-                persisted_data["employee_id"],
+        # Validate the quantity of HDDs scanned.
+        goal_qty = ROUTE["GC"][robot_number]
+        current_qty = validate_hdd(usn)
+
+        # Check for errors.
+        if "NG" in current_qty:
+            update_listbox(
+                error_listbox,
+                f"Error, HDD Quantity and Validators Quantity don't match for {usn}",
+                "red",
             )
-            if complete_response != "OK":
-                update_listbox(
-                    error_listbox,
-                    f"Complete Failed for {usn}: {complete_response}",
-                    "red",
-                )
-            else:
-                update_listbox(
-                    pass_listbox,
-                    f"Complete Response for {usn}: {complete_response}",
-                    "green",
-                )
-                should_restart = True
+            send_signal(robot_number, line, False)
+            return
+
+        if current_qty != goal_qty:
+            update_listbox(
+                error_listbox,
+                f"HDD Quantity Mismatch for {usn}: Expected {goal_qty}, Got {current_qty}",
+                "red",
+            )
+            send_signal(robot_number, line, False)
+            return
         else:
-            should_restart = True
+            # Send the complete for the previous USN if robot number is 3.
+            if robot_number == "3":
+                complete_response = send_complete(
+                    usn,
+                    line,
+                    workstation,
+                    persisted_data["employee_id"],
+                )
+                if complete_response != "OK":
+                    update_listbox(
+                        error_listbox,
+                        f"Complete Failed for {usn}: {complete_response}",
+                        "red",
+                    )
+                else:
+                    update_listbox(
+                        pass_listbox,
+                        f"Complete Response for {usn}: {complete_response}",
+                        "green",
+                    )
+                    should_restart = True
+            else:
+                should_restart = True
     if should_restart:
         persisted_data["counter"] = 0
         persisted_data["old_USN"] = persisted_data["current_USN"]

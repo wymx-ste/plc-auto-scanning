@@ -115,5 +115,28 @@ def send_complete(serial_number, line, station, username, stage=STAGE):
     return find_xml_value(tree, ".//a:CompleteResult")
 
 
+def validate_hdd(usn):
+    body = generate_soap_body(
+        """
+    <DynamicDBFunction xmlns="http://localhost/Tester.WebService/WebService">
+      <FunctionName>FUNC_VALIDATEHDD</FunctionName>
+      <Stage>AO</Stage>
+      <DynamicParameters>
+        <DynamicParameter>
+          <strParam>P_USN</strParam>
+          <strValue>{usn}</strValue>
+        </DynamicParameter>
+      </DynamicParameters>
+    </DynamicDBFunction>
+
+    """,
+        usn=usn,
+    )
+    tree = post_request(body, "Tester.WebService/WebService.asmx")
+    return find_xml_value(
+        tree, "./soap:Body" "/a:DynamicDBFunctionResponse" "/a:DynamicDBFunctionResult"
+    )
+
+
 if __name__ == "__main__":
     main()
