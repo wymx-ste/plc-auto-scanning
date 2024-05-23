@@ -15,6 +15,9 @@ else:
 env_path = os.path.join(application_path, ".env")
 env.read_env(env_path)
 
+ROUTES = {"GC": {1: "24", 2: "48", 3: "72"}}
+MAX_RETRIES = env.int("MAX_RETRIES")
+RETRY_DELAY = env.int("RETRY_DELAY")
 PLC_3L3 = env.str("PLC_3L3")
 PLC_3L6 = env.str("PLC_3L6")
 SFCS_SERVER = env.str("SFCS_SERVER")

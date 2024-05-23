@@ -1,4 +1,5 @@
-from gui.interface import run_app
+from gui.interface import PLCAutoScanningApp
 
 if __name__ == "__main__":
-    run_app()
+    app = PLCAutoScanningApp()
+    app.run_app()

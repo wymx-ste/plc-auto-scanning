@@ -1,7 +1,7 @@
-from pycomm3 import LogixDriver
 import time
-from config import PLC_3L3, PLC_3L6, PLC_DELAY
 import threading
+from pycomm3 import LogixDriver
+from config import PLC_3L3, PLC_3L6, PLC_DELAY
 
 
 def main():
