@@ -1,5 +1,6 @@
 import time
 import threading
+import logging
 from queue import Queue
 
 from sfcs.sfcs_lib import (
@@ -11,6 +12,9 @@ from sfcs.sfcs_lib import (
 
 from plc.communication import send_signal
 from config import MAX_RETRIES, RETRY_DELAY, ROUTES
+
+# Create a logger object.
+logger = logging.getLogger(__name__)
 
 # Global ThreadPoolExecutor for making the SFCS requests.
 tasks_queue = Queue()
@@ -55,6 +59,9 @@ class PLCAutoScanningLogic:
         successful_upload = False
 
         for attempt in range(MAX_RETRIES):
+            logger.info(
+                f"Processing Upload for {serial_number} - Attempt {attempt + 1}"
+            )
             response = upload_USN_item_with_barcode_validation(
                 self.app.current_USN,
                 serial_number,
@@ -62,6 +69,7 @@ class PLCAutoScanningLogic:
                 self.app.workstation,
                 self.app.employee_id,
             )
+            logger.info(f"Upload Response for {serial_number}: {response}")
             if response == "OK":
                 self.app.counter += 1
                 self.app.update_labels(
@@ -117,7 +125,9 @@ class PLCAutoScanningLogic:
         self.check_restart()
 
     def process_check_route(self, serial_number: str):
+        logger.info(f"Processing Check Route for {serial_number}")
         check_route_response = check_route(serial_number)
+        logger.info(f"Check Route Response for {serial_number}: {check_route_response}")
         if check_route_response != "OK":
             self.app.update_listbox(
                 self.app.error_listbox,
@@ -158,7 +168,11 @@ class PLCAutoScanningLogic:
         if self.app.counter >= self.app.quantity:
             # Validate the quantity of HDDs scanned.
             goal_qty = ROUTES["GC"][self.app.robot_number]
+            logger.info(f"Validating HDD Quantity for {self.app.current_USN}")
             current_qty = validate_hdd(self.app.current_USN)
+            logger.info(
+                f"Quantity Validation Response for {self.app.current_USN}: {current_qty}"
+            )
 
             # Check for errors.
             if "NG" in current_qty:
@@ -181,11 +195,15 @@ class PLCAutoScanningLogic:
             else:
                 # Send the complete for the previous USN if robot number is 3.
                 if self.app.robot_number == 3:
+                    logger.info(f"Sending Complete for {self.app.current_USN}")
                     complete_response = send_complete(
                         self.app.current_USN,
                         self.app.line,
                         self.app.workstation,
                         self.app.employee_id,
+                    )
+                    logger.info(
+                        f"Complete Response for {self.app.current_USN}: {complete_response}"
                     )
                     if complete_response != "OK":
                         self.app.update_listbox(
