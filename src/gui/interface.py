@@ -44,7 +44,7 @@ class PLCAutoScanningApp:
         # Font Style.
         default_font = font.nametofont("TkDefaultFont")
         default_font.configure(family="Helvetica", size=24)
-        listbox_font = font.Font(family="Helvetica", size=14)
+        text_widget_font = font.Font(family="Helvetica", size=14)
         self.root.option_add("*Font", default_font)
 
         # Header frame.
@@ -108,50 +108,48 @@ class PLCAutoScanningApp:
             ),
         )
 
-        # Main frame for Listboxes.
-        main_listbox_frame = tk.Frame(self.root)
-        main_listbox_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        # Main frame for Text widgets.
+        main_text_frame = tk.Frame(self.root)
+        main_text_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Configure the main_listbox_frame to expand its children equally.
-        main_listbox_frame.grid_columnconfigure(0, weight=1)
-        main_listbox_frame.grid_rowconfigure(0, weight=1)
-        main_listbox_frame.grid_rowconfigure(1, weight=1)
+        # Configure the main_text_frame to expand its children equally.
+        main_text_frame.grid_columnconfigure(0, weight=1)
+        main_text_frame.grid_rowconfigure(0, weight=1)
+        main_text_frame.grid_rowconfigure(1, weight=1)
 
-        # Frame for the PASS responses Listbox.
-        pass_frame = tk.Frame(main_listbox_frame)
+        # Frame for the PASS responses Text widget.
+        pass_frame = tk.Frame(main_text_frame)
         pass_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=5)
 
-        # Label for the PASS responses Listbox.
-        pass_label = tk.Label(pass_frame, text="PASS:", font=listbox_font)
+        # Label for the PASS responses Text widget.
+        pass_label = tk.Label(pass_frame, text="PASS:", font=text_widget_font)
         pass_label.pack(side="top", fill="x")
 
-        # Listbox to display the PASS responses.
-        self.response_listbox = tk.Listbox(pass_frame)
+        # Text widget to display the PASS responses.
+        self.response_text = tk.Text(pass_frame, wrap="word")
         scrollbar = tk.Scrollbar(
-            pass_frame, orient="vertical", command=self.response_listbox.yview
+            pass_frame, orient="vertical", command=self.response_text.yview
         )
-        self.response_listbox.config(yscrollcommand=scrollbar.set)
+        self.response_text.config(yscrollcommand=scrollbar.set)
         scrollbar.pack(side="right", fill="y")
-        self.response_listbox.pack(
-            side="left", fill="both", expand=True, padx=10, pady=10
-        )
+        self.response_text.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
-        # Frame for the ERROR responses Listbox.
-        error_frame = tk.Frame(main_listbox_frame)
+        # Frame for the ERROR responses Text widget.
+        error_frame = tk.Frame(main_text_frame)
         error_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=5)
 
-        # Label for the ERROR responses Listbox.
-        error_label = tk.Label(error_frame, text="ERROR:", font=listbox_font)
+        # Label for the ERROR responses Text widget.
+        error_label = tk.Label(error_frame, text="ERROR:", font=text_widget_font)
         error_label.pack(side="top", fill="x")
 
-        # Listbox to display the ERROR responses.
-        self.error_listbox = tk.Listbox(error_frame)
+        # Text widget to display the ERROR responses.
+        self.error_text = tk.Text(error_frame, wrap="word")
         scrollbar = tk.Scrollbar(
-            error_frame, orient="vertical", command=self.error_listbox.yview
+            error_frame, orient="vertical", command=self.error_text.yview
         )
-        self.error_listbox.config(yscrollcommand=scrollbar.set)
+        self.error_text.config(yscrollcommand=scrollbar.set)
         scrollbar.pack(side="right", fill="y")
-        self.error_listbox.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+        self.error_text.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
         # Open the modal window for employee ID on top of the main window.
         self.create_employee_id_window()
@@ -213,17 +211,25 @@ class PLCAutoScanningApp:
         else:
             self.root.destroy()
 
-    def clean_listbox(self, listbox):
-        listbox.delete(0, tk.END)
+    def clean_text_widget(self, text_widget):
+        text_widget.delete("1.0", tk.END)
 
-    def update_listbox(self, listbox, message: str, color: str = None):
+    def update_text_widget(self, text_widget, message: str, color: str = None):
         def _update():
-            listbox.insert(tk.END, message)
-            listbox.yview(tk.END)
+            if text_widget.get("1.0", tk.END).strip():
+                text_widget.insert(tk.END, "\n")
+            text_widget.insert(tk.END, message)
+            text_widget.yview(tk.END)
             if color:
-                listbox.itemconfig(listbox.size() - 1, {"bg": color, "fg": "white"})
+                text_widget.tag_add("colored", "1.0", "end")
+                text_widget.tag_config(
+                    "colored",
+                    background=color,
+                    foreground="white",
+                    spacing3=5,
+                )
 
-        listbox.after(0, _update)
+        text_widget.after(0, _update)
 
     def update_labels(self, label, value_text, value):
         label.config(text=f"{value_text}: {value}")

@@ -29,8 +29,8 @@ class PLCAutoScanningLogic:
         if serial_number:
             if serial_number.startswith("WTR"):
                 if serial_number == self.app.old_USN:
-                    self.app.update_listbox(
-                        self.app.error_listbox,
+                    self.app.update_text_widget(
+                        self.app.error_text,
                         f"The current USN is the same as the scanned before.",
                         "red",
                     )
@@ -41,16 +41,16 @@ class PLCAutoScanningLogic:
                 if self.app.current_USN:
                     tasks_queue.put((self.process_serial, (serial_number,)))
                 else:
-                    self.app.update_listbox(
-                        self.app.error_listbox, "Please scan a valid L10.", "red"
+                    self.app.update_text_widget(
+                        self.app.error_text, "Please scan a valid L10.", "red"
                     )
                     send_signal(self.app.robot_number, self.app.line, False)
 
     def process_serial(self, serial_number: str):
         # Check if counter is less than the quantity.
         if self.app.counter >= self.app.quantity:
-            self.app.update_listbox(
-                self.app.error_listbox, f"Quantity limit reached.", "red"
+            self.app.update_text_widget(
+                self.app.error_text, f"Quantity limit reached.", "red"
             )
             send_signal(self.app.robot_number, self.app.line, False)
             return
@@ -77,8 +77,8 @@ class PLCAutoScanningLogic:
                     "Quantity",
                     f"{self.app.counter}/{self.app.quantity}",
                 )
-                self.app.update_listbox(
-                    self.app.response_listbox,
+                self.app.update_text_widget(
+                    self.app.response_text,
                     f"Upload Response for {serial_number}: {response}",
                     "green",
                 )
@@ -88,13 +88,13 @@ class PLCAutoScanningLogic:
                 # Exit the loop since upload was successful.
                 break
             elif "unique constraint" in response:
-                self.app.update_listbox(
-                    self.app.error_listbox,
+                self.app.update_text_widget(
+                    self.app.error_text,
                     f"Upload Failed for {serial_number}: {response}",
                     "red",
                 )
-                self.app.update_listbox(
-                    self.app.error_listbox,
+                self.app.update_text_widget(
+                    self.app.error_text,
                     f"Retrying for {serial_number} due to unique constraint error. Attempt {attempt + 1}",
                     "orange",
                 )
@@ -102,8 +102,8 @@ class PLCAutoScanningLogic:
                 # Wait before retrying.
                 time.sleep(RETRY_DELAY)
             else:
-                self.app.update_listbox(
-                    self.app.error_listbox,
+                self.app.update_text_widget(
+                    self.app.error_text,
                     f"Upload Failed for {serial_number}: {response}",
                     "red",
                 )
@@ -114,8 +114,8 @@ class PLCAutoScanningLogic:
 
         if not successful_upload and attempt == MAX_RETRIES - 1:
             # If after all retries, upload wasn't successful, log the final failure.
-            self.app.update_listbox(
-                self.app.error_listbox,
+            self.app.update_text_widget(
+                self.app.error_text,
                 f"Upload Failed after {MAX_RETRIES} retries for {serial_number}: {response}",
                 "red",
             )
@@ -129,8 +129,8 @@ class PLCAutoScanningLogic:
         check_route_response = check_route(serial_number)
         logger.info(f"Check Route Response for {serial_number}: {check_route_response}")
         if check_route_response != "OK":
-            self.app.update_listbox(
-                self.app.error_listbox,
+            self.app.update_text_widget(
+                self.app.error_text,
                 f"Check Route Failed for {serial_number}: {check_route_response}",
                 "red",
             )
@@ -138,12 +138,12 @@ class PLCAutoScanningLogic:
         else:
             current_usn = self.app.current_USN
             if not current_usn:
-                # Clear the Listboxes before processing a new serial number.
-                self.app.clean_listbox(self.app.response_listbox)
-                self.app.clean_listbox(self.app.error_listbox)
+                # Clear the Text widgets before processing a new serial number.
+                self.app.clean_text_widget(self.app.response_text)
+                self.app.clean_text_widget(self.app.error_text)
                 self.app.current_USN = serial_number
-                self.app.update_listbox(
-                    self.app.response_listbox, f"USN: {serial_number}"
+                self.app.update_text_widget(
+                    self.app.response_text, f"USN: {serial_number}"
                 )
                 self.app.update_labels(
                     self.app.unit_serial_number_label,
@@ -156,8 +156,8 @@ class PLCAutoScanningLogic:
                     f"{self.app.counter}/{self.app.quantity}",
                 )
             else:
-                self.app.update_listbox(
-                    self.app.error_listbox,
+                self.app.update_text_widget(
+                    self.app.error_text,
                     f"Please scan a valid Serial or Validator",
                     "red",
                 )
@@ -176,8 +176,8 @@ class PLCAutoScanningLogic:
 
             # Check for errors.
             if "NG" in current_qty:
-                self.app.update_listbox(
-                    self.app.error_listbox,
+                self.app.update_text_widget(
+                    self.app.error_text,
                     f"Error: HDD Quantity and Validators Quantity don't match for {self.app.current_USN}",
                     "red",
                 )
@@ -185,8 +185,8 @@ class PLCAutoScanningLogic:
                 return
 
             if current_qty != goal_qty:
-                self.app.update_listbox(
-                    self.app.error_listbox,
+                self.app.update_text_widget(
+                    self.app.error_text,
                     f"HDD Quantity Mismatch for {self.app.current_USN}: Expected {goal_qty}, Got {current_qty}",
                     "red",
                 )
@@ -206,14 +206,14 @@ class PLCAutoScanningLogic:
                         f"Complete Response for {self.app.current_USN}: {complete_response}"
                     )
                     if complete_response != "OK":
-                        self.app.update_listbox(
-                            self.app.error_listbox,
+                        self.app.update_text_widget(
+                            self.app.error_text,
                             f"Complete Failed for {self.app.current_USN}: {complete_response}",
                             "red",
                         )
                     else:
-                        self.app.update_listbox(
-                            self.app.response_listbox,
+                        self.app.update_text_widget(
+                            self.app.response_text,
                             f"Complete Response for {self.app.current_USN}: {complete_response}",
                             "green",
                         )
