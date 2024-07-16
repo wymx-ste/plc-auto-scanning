@@ -54,8 +54,8 @@ def test_handle_serials_submit_with_invalid_serial(logic, app, patch_dependencie
     """Test handle_serials_submit with an invalid serial number."""
     app.serial_numbers.get.return_value = "INVALID"
     logic.handle_serials_submit()
-    app.update_listbox.assert_called_with(
-        app.error_listbox, "Please scan a valid L10.", "red"
+    app.update_text_widget.assert_called_with(
+        app.error_text, "Please scan a valid L10.", "red"
     )
     patch_dependencies["send_signal"].assert_called_with(
         app.robot_number, app.line, False
@@ -65,7 +65,7 @@ def test_handle_serials_submit_with_invalid_serial(logic, app, patch_dependencie
 def test_handle_serials_submit_with_valid_WTR_serial(logic, app):
     """Test handle_serials_submit with a valid WTR serial number."""
     logic.handle_serials_submit()
-    app.update_listbox.assert_not_called()
+    app.update_text_widget.assert_not_called()
     assert not tasks_queue.empty()
     task, args = tasks_queue.get()
     assert task == logic.process_check_route
@@ -77,7 +77,7 @@ def test_handle_serials_submit_with_valid_USN_serial(logic, app):
     app.serial_numbers.get.return_value = "USN123"
     app.current_USN = "WTR123DDE21"
     logic.handle_serials_submit()
-    app.update_listbox.assert_not_called()
+    app.update_text_widget.assert_not_called()
     assert not tasks_queue.empty()
     task, args = tasks_queue.get()
     assert task == logic.process_serial
@@ -88,8 +88,8 @@ def test_handle_serials_submit_with_same_serial_number(logic, app, patch_depende
     """Test handle_serials_submit with the same WTR serial number."""
     app.serial_numbers.get.return_value = "WTROLD123"
     logic.handle_serials_submit()
-    app.update_listbox.assert_called_with(
-        app.error_listbox,
+    app.update_text_widget.assert_called_with(
+        app.error_text,
         "The current USN is the same as the scanned before.",
         "red",
     )
@@ -105,8 +105,8 @@ def test_process_serial_with_quantity_limit(logic, app, patch_dependencies):
     """Test process_serial with the quantity limit reached."""
     app.counter = app.quantity
     logic.process_serial("SERIAL123")
-    app.update_listbox.assert_called_with(
-        app.error_listbox, "Quantity limit reached.", "red"
+    app.update_text_widget.assert_called_with(
+        app.error_text, "Quantity limit reached.", "red"
     )
     patch_dependencies["send_signal"].assert_called_with(
         app.robot_number, app.line, False
@@ -117,8 +117,8 @@ def test_process_serial_success(logic, app, patch_dependencies):
     """Test process_serial with a successful upload."""
     patch_dependencies["upload_USN_item_with_barcode_validation"].return_value = "OK"
     logic.process_serial("SERIAL123")
-    app.update_listbox.assert_called_with(
-        app.response_listbox, "Upload Response for SERIAL123: OK", "green"
+    app.update_text_widget.assert_called_with(
+        app.response_text, "Upload Response for SERIAL123: OK", "green"
     )
     app.update_labels.assert_called_with(
         app.quantity_label, "Quantity", f"1/{app.quantity}"
@@ -130,8 +130,8 @@ def test_process_serial_failure(logic, app, patch_dependencies):
     """Test process_serial with a failed upload."""
     patch_dependencies["upload_USN_item_with_barcode_validation"].return_value = "ERROR"
     logic.process_serial("SERIAL123")
-    app.update_listbox.assert_called_with(
-        app.error_listbox, "Upload Failed for SERIAL123: ERROR", "red"
+    app.update_text_widget.assert_called_with(
+        app.error_text, "Upload Failed for SERIAL123: ERROR", "red"
     )
     patch_dependencies["send_signal"].assert_called_with(
         app.robot_number, app.line, False
@@ -147,22 +147,22 @@ def test_process_serial_with_retry(logic, app, patch_dependencies, mocker):
     logic.process_serial("SERIAL123")
     retry_calls = [
         mocker.call(
-            app.error_listbox,
+            app.error_text,
             "Upload Failed for SERIAL123: unique constraint",
             "red",
         ),
         mocker.call(
-            app.error_listbox,
+            app.error_text,
             "Retrying for SERIAL123 due to unique constraint error. Attempt 1",
             "orange",
         ),
         mocker.call(
-            app.response_listbox,
+            app.response_text,
             "Upload Response for SERIAL123: OK",
             "green",
         ),
     ]
-    app.update_listbox.assert_has_calls(retry_calls)
+    app.update_text_widget.assert_has_calls(retry_calls)
     assert app.counter == 1
 
 
@@ -174,8 +174,8 @@ def test_process_serial_with_max_retries(logic, app, patch_dependencies):
         "unique constraint",
     ]
     logic.process_serial("SERIAL123")
-    app.update_listbox.assert_called_with(
-        app.error_listbox,
+    app.update_text_widget.assert_called_with(
+        app.error_text,
         "Upload Failed after 3 retries for SERIAL123: unique constraint",
         "red",
     )
@@ -193,7 +193,9 @@ def test_process_check_route_success(logic, app, patch_dependencies):
     serial_number = "WTR1234567"
     patch_dependencies["check_route"].return_value = "OK"
     logic.process_check_route(serial_number)
-    app.update_listbox.assert_called_with(app.response_listbox, f"USN: {serial_number}")
+    app.update_text_widget.assert_called_with(
+        app.response_text, f"USN: {serial_number}"
+    )
     assert app.current_USN == serial_number
 
 
@@ -203,8 +205,8 @@ def test_process_check_route_failure(logic, app, patch_dependencies):
     error_message = "ROUTE ERROR"
     patch_dependencies["check_route"].return_value = error_message
     logic.process_check_route(serial_number)
-    app.update_listbox.assert_called_with(
-        app.error_listbox,
+    app.update_text_widget.assert_called_with(
+        app.error_text,
         f"Check Route Failed for {serial_number}: {error_message}",
         "red",
     )
@@ -222,8 +224,8 @@ def test_process_check_route_with_double_WTR_serial(logic, app, patch_dependenci
     patch_dependencies["check_route"].return_value = "OK"
     app.current_USN = "WTR2345678"
     logic.process_check_route(serial_number)
-    app.update_listbox.assert_called_with(
-        app.error_listbox,
+    app.update_text_widget.assert_called_with(
+        app.error_text,
         f"Please scan a valid Serial or Validator",
         "red",
     )
@@ -243,8 +245,8 @@ def test_check_restart_when_NG(logic, app, patch_dependencies):
     app.counter = 24
     app.quantity = 24
     logic.check_restart()
-    app.update_listbox.assert_called_with(
-        app.error_listbox,
+    app.update_text_widget.assert_called_with(
+        app.error_text,
         f"Error: HDD Quantity and Validators Quantity don't match for {app.current_USN}",
         "red",
     )
@@ -261,8 +263,8 @@ def test_check_restart_mismatch(logic, app, patch_dependencies):
     app.counter = 24
     app.quantity = 24
     logic.check_restart()
-    app.update_listbox.assert_called_with(
-        app.error_listbox,
+    app.update_text_widget.assert_called_with(
+        app.error_text,
         f"HDD Quantity Mismatch for {current_SN}: Expected 24, Got 48",
         "red",
     )
@@ -281,8 +283,8 @@ def test_check_restart_complete_failure(logic, app, patch_dependencies):
     patch_dependencies["send_complete"].return_value = "ERROR"
     patch_dependencies["validate_hdd"].return_value = "72"
     logic.check_restart()
-    app.update_listbox.assert_called_with(
-        app.error_listbox,
+    app.update_text_widget.assert_called_with(
+        app.error_text,
         f"Complete Failed for {current_SN}: ERROR",
         "red",
     )
@@ -313,8 +315,8 @@ def test_check_restart_robot_3(logic, app, patch_dependencies):
     patch_dependencies["send_complete"].return_value = "OK"
     patch_dependencies["validate_hdd"].return_value = "72"
     logic.check_restart()
-    app.update_listbox.assert_called_with(
-        app.response_listbox,
+    app.update_text_widget.assert_called_with(
+        app.response_text,
         f"Complete Response for {current_SN}: OK",
         "green",
     )
