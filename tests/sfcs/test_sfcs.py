@@ -63,7 +63,10 @@ def test_post_request(mocker, mock_response):
         sfcs_lib.find_xml_value(response_tree, ".//a:DynamicDBFunctionResult") == "OK"
     )
     mock_post.assert_called_once_with(
-        f"http://{sfcs_lib.SFCS_SERVER}/{endpoint}", data=body, headers=sfcs_lib.HEADERS
+        f"http://{sfcs_lib.SFCS_SERVER}/{endpoint}",
+        data=body,
+        headers=sfcs_lib.HEADERS,
+        timeout=5,
     )
 
 

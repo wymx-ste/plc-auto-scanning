@@ -1,7 +1,10 @@
+import logging
 import requests
 from xml.etree.ElementTree import fromstring
 from config import SFCS_SERVER, STAGE, CATEGORY
 
+# Create a logger object.
+logger = logging.getLogger(__name__)
 
 HEADERS = {"content-type": "text/xml"}
 NAMESPACES = {
@@ -15,15 +18,27 @@ def main():
     pass
 
 
-def post_request(body, endpoint):
+def post_request(body, endpoint, timeout=5):
     url = f"http://{SFCS_SERVER}/{endpoint}"
-    response = requests.post(url, data=body, headers=HEADERS)
-    return fromstring(response.content)
+    try:
+        response = requests.post(url, data=body, headers=HEADERS, timeout=timeout)
+        response.raise_for_status()
+        return fromstring(response.content)
+    except requests.exceptions.Timeout:
+        logger.error(f"Request to {url} timed out after {timeout} seconds.")
+        return "TIMEOUT"
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error while making request: {e}")
+        return
 
 
 def find_xml_value(tree, path, split=False):
-    result = tree.findall(path, NAMESPACES)
+    if tree is None or isinstance(tree, str):
+        logger.error(f"Invalid XML tree provided: {tree}")
+        return tree
+
     try:
+        result = tree.findall(path, NAMESPACES)
         return [i.text.split(".")[0] if split else i.text for i in result][0]
     except IndexError:
         return
