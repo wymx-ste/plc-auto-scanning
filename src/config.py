@@ -1,6 +1,7 @@
 import os
 import sys
 import logging.config
+from pycomm3.logger import configure_default_logger
 from environs import Env
 
 env = Env()
@@ -64,3 +65,6 @@ LOGGING_CONFIG = {
 }
 
 logging.config.dictConfig(LOGGING_CONFIG)
+
+# Configure the default logger for pycomm3.
+configure_default_logger(level=logging.WARNING, filename="logs/pycomm3.log")

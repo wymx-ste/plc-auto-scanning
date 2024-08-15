@@ -26,6 +26,7 @@ class PLCAutoScanningLogic:
 
     def handle_serials_submit(self, event=None):
         serial_number = self.app.serial_numbers.get()
+        logger.info(f"Serial Number Scanned: {serial_number}")
         if serial_number:
             if serial_number.startswith("WTR"):
                 if serial_number == self.app.old_USN:
@@ -34,6 +35,7 @@ class PLCAutoScanningLogic:
                         f"The current USN is the same as the scanned before.",
                         "red",
                     )
+                    logger.info(f"The current USN is the same as the scanned before.")
                     send_signal(self.app.robot_number, self.app.line, False)
                     return
                 tasks_queue.put((self.process_check_route, (serial_number,)))
@@ -44,6 +46,7 @@ class PLCAutoScanningLogic:
                     self.app.update_text_widget(
                         self.app.error_text, "Please scan a valid L10.", "red"
                     )
+                    logger.info(f"Invalid L10 scanned.")
                     send_signal(self.app.robot_number, self.app.line, False)
 
     def process_serial(self, serial_number: str):
@@ -87,6 +90,7 @@ class PLCAutoScanningLogic:
 
                 # Exit the loop since upload was successful.
                 break
+
             elif "unique constraint" in response:
                 self.app.update_text_widget(
                     self.app.error_text,
@@ -96,6 +100,21 @@ class PLCAutoScanningLogic:
                 self.app.update_text_widget(
                     self.app.error_text,
                     f"Retrying for {serial_number} due to unique constraint error. Attempt {attempt + 1}",
+                    "orange",
+                )
+
+                # Wait before retrying.
+                time.sleep(RETRY_DELAY)
+
+            elif "TIMEOUT" in response:
+                self.app.update_text_widget(
+                    self.app.error_text,
+                    f"Upload Failed for {serial_number}: {response}",
+                    "red",
+                )
+                self.app.update_text_widget(
+                    self.app.error_text,
+                    f"Retrying for {serial_number} due to timeout error. Attempt {attempt + 1}",
                     "orange",
                 )
 
@@ -225,7 +244,7 @@ class PLCAutoScanningLogic:
             self.app.old_USN = self.app.current_USN
             self.app.current_USN = None
 
-    def start_tasks_workers(self, number_of_workers=12):
+    def start_tasks_workers(self, number_of_workers=18):
         def task_worker():
             while True:
                 task, args = tasks_queue.get(block=True)

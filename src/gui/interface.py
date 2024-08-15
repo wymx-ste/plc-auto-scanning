@@ -127,6 +127,7 @@ class PLCAutoScanningApp:
 
         # Text widget to display the PASS responses.
         self.response_text = tk.Text(pass_frame, wrap="word")
+        self.response_text.config(state=tk.DISABLED)
         scrollbar = tk.Scrollbar(
             pass_frame, orient="vertical", command=self.response_text.yview
         )
@@ -144,6 +145,7 @@ class PLCAutoScanningApp:
 
         # Text widget to display the ERROR responses.
         self.error_text = tk.Text(error_frame, wrap="word")
+        self.error_text.config(state=tk.DISABLED)
         scrollbar = tk.Scrollbar(
             error_frame, orient="vertical", command=self.error_text.yview
         )
@@ -216,6 +218,10 @@ class PLCAutoScanningApp:
 
     def update_text_widget(self, text_widget, message: str, color: str = None):
         def _update():
+
+            # Enable the text widget to insert the message.
+            text_widget.config(state=tk.NORMAL)
+
             if text_widget.get("1.0", tk.END).strip():
                 text_widget.insert(tk.END, "\n")
             text_widget.insert(tk.END, message)
@@ -228,6 +234,9 @@ class PLCAutoScanningApp:
                     foreground="white",
                     spacing3=5,
                 )
+
+            # Disable the text widget to prevent editing.
+            text_widget.config(state=tk.DISABLED)
 
         text_widget.after(0, _update)
 
