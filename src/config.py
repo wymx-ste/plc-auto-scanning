@@ -66,5 +66,8 @@ LOGGING_CONFIG = {
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
+# Create a logger for the application.
+logger = logging.getLogger("App")
+
 # Configure the default logger for pycomm3.
 configure_default_logger(level=logging.WARNING, filename="logs/pycomm3.log")

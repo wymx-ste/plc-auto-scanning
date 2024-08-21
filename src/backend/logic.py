@@ -13,20 +13,18 @@ from sfcs.sfcs_lib import (
 from plc.communication import send_signal
 from config import MAX_RETRIES, RETRY_DELAY, ROUTES
 
-# Create a logger object.
-logger = logging.getLogger(__name__)
-
 # Global ThreadPoolExecutor for making the SFCS requests.
 tasks_queue = Queue()
 
 
 class PLCAutoScanningLogic:
-    def __init__(self, app):
+    def __init__(self, app, logger: logging.Logger = logging.getLogger(__name__)):
         self.app = app
+        self.logger = logger.getChild(__class__.__name__)
 
     def handle_serials_submit(self, event=None):
         serial_number = self.app.serial_numbers.get()
-        logger.info(f"Serial Number Scanned: {serial_number}")
+        self.logger.info(f"Serial Number Scanned: {serial_number}")
         if serial_number:
             if serial_number.startswith("WTR"):
                 if serial_number == self.app.old_USN:
@@ -35,7 +33,9 @@ class PLCAutoScanningLogic:
                         f"The current USN is the same as the scanned before.",
                         "red",
                     )
-                    logger.info(f"The current USN is the same as the scanned before.")
+                    self.logger.info(
+                        f"The current USN is the same as the scanned before."
+                    )
                     send_signal(self.app.robot_number, self.app.line, False)
                     return
                 tasks_queue.put((self.process_check_route, (serial_number,)))
@@ -46,7 +46,7 @@ class PLCAutoScanningLogic:
                     self.app.update_text_widget(
                         self.app.error_text, "Please scan a valid L10.", "red"
                     )
-                    logger.info(f"Invalid L10 scanned.")
+                    self.logger.info(f"Invalid L10 scanned.")
                     send_signal(self.app.robot_number, self.app.line, False)
 
     def process_serial(self, serial_number: str):
@@ -62,7 +62,7 @@ class PLCAutoScanningLogic:
         successful_upload = False
 
         for attempt in range(MAX_RETRIES):
-            logger.info(
+            self.logger.info(
                 f"Processing Upload for {serial_number} - Attempt {attempt + 1}"
             )
             response = upload_USN_item_with_barcode_validation(
@@ -72,7 +72,7 @@ class PLCAutoScanningLogic:
                 self.app.workstation,
                 self.app.employee_id,
             )
-            logger.info(f"Upload Response for {serial_number}: {response}")
+            self.logger.info(f"Upload Response for {serial_number}: {response}")
             if response == "OK":
                 self.app.counter += 1
                 self.app.update_labels(
@@ -144,9 +144,11 @@ class PLCAutoScanningLogic:
         self.check_restart()
 
     def process_check_route(self, serial_number: str):
-        logger.info(f"Processing Check Route for {serial_number}")
+        self.logger.info(f"Processing Check Route for {serial_number}")
         check_route_response = check_route(serial_number)
-        logger.info(f"Check Route Response for {serial_number}: {check_route_response}")
+        self.logger.info(
+            f"Check Route Response for {serial_number}: {check_route_response}"
+        )
         if check_route_response != "OK":
             self.app.update_text_widget(
                 self.app.error_text,
@@ -187,9 +189,9 @@ class PLCAutoScanningLogic:
         if self.app.counter >= self.app.quantity:
             # Validate the quantity of HDDs scanned.
             goal_qty = ROUTES["GC"][self.app.robot_number]
-            logger.info(f"Validating HDD Quantity for {self.app.current_USN}")
+            self.logger.info(f"Validating HDD Quantity for {self.app.current_USN}")
             current_qty = validate_hdd(self.app.current_USN)
-            logger.info(
+            self.logger.info(
                 f"Quantity Validation Response for {self.app.current_USN}: {current_qty}"
             )
 
@@ -214,14 +216,14 @@ class PLCAutoScanningLogic:
             else:
                 # Send the complete for the previous USN if robot number is 3.
                 if self.app.robot_number == 3:
-                    logger.info(f"Sending Complete for {self.app.current_USN}")
+                    self.logger.info(f"Sending Complete for {self.app.current_USN}")
                     complete_response = send_complete(
                         self.app.current_USN,
                         self.app.line,
                         self.app.workstation,
                         self.app.employee_id,
                     )
-                    logger.info(
+                    self.logger.info(
                         f"Complete Response for {self.app.current_USN}: {complete_response}"
                     )
                     if complete_response != "OK":

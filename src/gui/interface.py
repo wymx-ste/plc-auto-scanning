@@ -11,14 +11,12 @@ from helpers.utils import (
 
 from backend.logic import PLCAutoScanningLogic
 
-# Create a logger object.
-logger = logging.getLogger(__name__)
 
+class PLCAutoScanningInterface:
 
-class PLCAutoScanningApp:
-
-    def __init__(self) -> None:
-        self.logic = PLCAutoScanningLogic(self)
+    def __init__(self, logger: logging.Logger = logging.getLogger(__name__)) -> None:
+        self.logger = logger.getChild(__class__.__name__)
+        self.logic = PLCAutoScanningLogic(self, logger=self.logger)
         self.aqua = "#4dcbbd"
         self.green = "#6ccc9c"
         self.yellow = "#c1c95a"
@@ -32,7 +30,7 @@ class PLCAutoScanningApp:
 
     def create_serial_number_window(self):
         self.root = tk.Tk()
-        logger.info("Application started.")
+        self.logger.info("Application started.")
         self.root.title("PLC Auto Scanning App")
         self.root.state("zoomed")
 
@@ -172,7 +170,7 @@ class PLCAutoScanningApp:
         employee_id = simpledialog.askstring(
             "Employee ID", "Please enter your Employee ID:", parent=self.root
         )
-        logger.info(f"Employee ID entered: {employee_id}")
+        self.logger.info(f"Employee ID entered: {employee_id}")
         allowed_users = read_allowed_users("users.txt")
 
         if employee_id and employee_id.upper() in allowed_users:
@@ -190,7 +188,7 @@ class PLCAutoScanningApp:
         robot_number = simpledialog.askinteger(
             "Robot Number", "Please enter the Robot Number:", parent=self.root
         )
-        logger.info(f"Robot Number entered: {robot_number}")
+        self.logger.info(f"Robot Number entered: {robot_number}")
 
         if robot_number:
             self.robot_number = robot_number
@@ -202,7 +200,7 @@ class PLCAutoScanningApp:
         quantity = simpledialog.askinteger(
             "Quantity", "Please enter the quantity to be built:"
         )
-        logger.info(f"Quantity entered: {quantity}")
+        self.logger.info(f"Quantity entered: {quantity}")
         if quantity:
             self.quantity = int(quantity)
             self.update_labels(self.quantity_label, "Quantity", quantity)
@@ -257,5 +255,5 @@ class PLCAutoScanningApp:
 
 
 if __name__ == "__main__":
-    app = PLCAutoScanningApp()
+    app = PLCAutoScanningInterface()
     app.run_app()
