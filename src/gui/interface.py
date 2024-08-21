@@ -214,7 +214,15 @@ class PLCAutoScanningApp:
             self.root.destroy()
 
     def clean_text_widget(self, text_widget):
+
+        # Enable the text widget to insert the message.
+        text_widget.config(state=tk.NORMAL)
+
+        # Delete the content of the text widget.
         text_widget.delete("1.0", tk.END)
+
+        # Disable the text widget to prevent editing.
+        text_widget.config(state=tk.DISABLED)
 
     def update_text_widget(self, text_widget, message: str, color: str = None):
         def _update():
